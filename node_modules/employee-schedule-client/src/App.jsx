@@ -17,6 +17,20 @@ const currentMonthValue = () => {
   return `${now.getFullYear()}-${`${now.getMonth() + 1}`.padStart(2, "0")}`;
 };
 
+const parseJsonResponse = async (response) => {
+  const text = await response.text();
+
+  if (!text) {
+    throw new Error("The server returned an empty response.");
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("The server returned an invalid response.");
+  }
+};
+
 function App() {
   const [month, setMonth] = useState(currentMonthValue());
   const [employees, setEmployees] = useState([]);
@@ -25,6 +39,9 @@ function App() {
   const [selectedLeaveDates, setSelectedLeaveDates] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const seniorCount = employees.filter((employee) => employee.level === "senior").length;
+  const juniorCount = employees.filter((employee) => employee.level === "junior").length;
 
   useEffect(() => {
     const load = async () => {
@@ -35,8 +52,12 @@ function App() {
           fetch(`/api/schedule?month=${month}`)
         ]);
 
-        const employeeData = await employeeResponse.json();
-        const scheduleData = await scheduleResponse.json();
+        const employeeData = await parseJsonResponse(employeeResponse);
+        const scheduleData = await parseJsonResponse(scheduleResponse);
+
+        if (!employeeResponse.ok) {
+          throw new Error(employeeData.message || "Unable to load employees.");
+        }
 
         if (!scheduleResponse.ok) {
           throw new Error(scheduleData.message || "Unable to generate schedule.");
@@ -45,6 +66,7 @@ function App() {
         setEmployees(employeeData);
         setSchedule(scheduleData);
         setSelectedEmployee((previous) => previous || employeeData[0]?.employeeId || "");
+        setSelectedLeaveDates([]);
         setError("");
       } catch (requestError) {
         setError(requestError.message);
@@ -72,12 +94,12 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           employeeId: selectedEmployee,
-          dates: selectedLeaveDates.sort(),
+          dates: [...selectedLeaveDates].sort(),
           month
         })
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
       if (!response.ok) {
         throw new Error(data.message || "Unable to save leave.");
       }
@@ -112,7 +134,7 @@ function App() {
           <select value={selectedEmployee} onChange={(event) => setSelectedEmployee(event.target.value)}>
             {employees.map((employee) => (
               <option key={employee.employeeId} value={employee.employeeId}>
-                {employee.name} • {employee.level}
+                {employee.name} - {employee.level}
               </option>
             ))}
           </select>
@@ -141,9 +163,9 @@ function App() {
         <div className="panel compact">
           <label>Team Snapshot</label>
           <div className="stats">
-            <div><strong>20</strong><span>Employees</span></div>
-            <div><strong>13</strong><span>Senior</span></div>
-            <div><strong>7</strong><span>Junior</span></div>
+            <div><strong>{employees.length}</strong><span>Employees</span></div>
+            <div><strong>{seniorCount}</strong><span>Senior</span></div>
+            <div><strong>{juniorCount}</strong><span>Junior</span></div>
           </div>
         </div>
       </aside>
@@ -175,7 +197,7 @@ function App() {
                       {employee.level}
                     </span>
                   </div>
-                  <p>{employee.role} • {employee.gender}</p>
+                  <p>{employee.role} - {employee.gender}</p>
                   <div className="metrics">
                     <span>{shiftLabelMap[employee.fixedShift]}</span>
                     <span>{employee.workedDays} days</span>
@@ -201,9 +223,7 @@ function App() {
                         {shiftMembers.map((employee) => (
                           <li key={employee.employeeId}>
                             <span>{employee.name}</span>
-                            <small>
-                              {employee.level}
-                            </small>
+                            <small>{employee.level}</small>
                           </li>
                         ))}
                       </ul>

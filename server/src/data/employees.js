@@ -7,16 +7,10 @@ export const employeeSeed = [
   { employeeId: "EMP006", name: "Priya Sharma", gender: "female", level: "senior", role: "Senior Developer", nightShiftBlockedUntil: "2026-02-28" },
   { employeeId: "EMP007", name: "Arjun Rao", gender: "male", level: "senior", role: "Senior Developer", nightShiftBlockedUntil: "2026-03-31" },
   { employeeId: "EMP008", name: "Neha Kapoor", gender: "female", level: "senior", role: "Senior Developer", nightShiftBlockedUntil: "2026-01-31" },
-  { employeeId: "EMP009", name: "Vikram Joshi", gender: "male", level: "senior", role: "Senior Developer", nightShiftBlockedUntil: "2026-04-30" },
-  { employeeId: "EMP010", name: "Ananya Das", gender: "female", level: "senior", role: "Senior Developer", nightShiftBlockedUntil: "2026-02-28" },
-  { employeeId: "EMP011", name: "Manav Kulkarni", gender: "male", level: "senior", role: "Senior Developer", nightShiftBlockedUntil: "2026-03-31" },
-  { employeeId: "EMP012", name: "Kavya Iyer", gender: "female", level: "senior", role: "Senior Developer", nightShiftBlockedUntil: "2026-01-31" },
-  { employeeId: "EMP013", name: "Dev Malhotra", gender: "male", level: "senior", role: "Senior Developer", nightShiftBlockedUntil: "2026-04-30" },
   { employeeId: "EMP014", name: "Rahul Sethi", gender: "male", level: "junior", role: "Junior Developer", nightShiftBlockedUntil: "2026-02-28" },
   { employeeId: "EMP015", name: "Diya Bansal", gender: "female", level: "junior", role: "Junior Developer", nightShiftBlockedUntil: "2026-01-31" },
   { employeeId: "EMP016", name: "Nikhil Arora", gender: "male", level: "junior", role: "Junior Developer", nightShiftBlockedUntil: "2026-03-31" },
   { employeeId: "EMP017", name: "Meera Menon", gender: "female", level: "junior", role: "Junior Developer", nightShiftBlockedUntil: "2026-04-30" },
   { employeeId: "EMP018", name: "Sahil Gupta", gender: "male", level: "junior", role: "Junior Developer", nightShiftBlockedUntil: "2026-02-28" },
-  { employeeId: "EMP019", name: "Ritika Jain", gender: "female", level: "junior", role: "Junior Developer", nightShiftBlockedUntil: "2026-03-31" },
-  { employeeId: "EMP020", name: "Aditya Roy", gender: "male", level: "junior", role: "Junior Developer", nightShiftBlockedUntil: "2026-01-31" }
+  { employeeId: "EMP019", name: "Ritika Jain", gender: "female", level: "junior", role: "Junior Developer", nightShiftBlockedUntil: "2026-03-31" }
 ];

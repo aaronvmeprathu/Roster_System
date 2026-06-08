@@ -1,8 +1,10 @@
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 import { employeeSeed } from "../data/employees.js";
 import { Employee } from "../models/Employee.js";
 import { Leave } from "../models/Leave.js";
-import { addMonths, formatDateString } from "../utils/scheduler.js";
+import { formatDateString } from "../utils/scheduler.js";
 
 let memoryLeaves = [];
 
@@ -33,7 +35,22 @@ export const seedEmployees = async (useDatabase) => {
 };
 
 export const getEmployees = async (useDatabase) => {
-  if (!useDatabase) return employeeSeed;
+  if (!useDatabase) {
+    const filePath = path.join(process.cwd(), "blocks.json");
+    if (fs.existsSync(filePath)) {
+      try {
+        const savedBlocks = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        employeeSeed.forEach((emp) => {
+          if (savedBlocks[emp.employeeId] !== undefined) {
+            emp.nightShiftBlockedUntil = savedBlocks[emp.employeeId];
+          }
+        });
+      } catch (e) {
+        console.error("Failed to read blocks.json", e);
+      }
+    }
+    return employeeSeed;
+  }
   return Employee.find().sort({ employeeId: 1 }).lean();
 };
 
@@ -58,42 +75,35 @@ export const saveEmployeeLeave = async ({ employeeId, dates }, useDatabase) => {
   return updated;
 };
 
-export const updateEmployeeNightBlocks = async (employees, nightTeamIds, monthStart, useDatabase) => {
-  const blockDateStr = addMonths(monthStart, 2);
-  const blockDate = useDatabase ? new Date(blockDateStr) : blockDateStr;
-
-  const updates = [];
-  employees.forEach((employee) => {
-    const isAssignedToNight = nightTeamIds.includes(employee.employeeId);
-    const currentBlock = employee.nightShiftBlockedUntil;
-    const currentBlockStr = formatDateString(currentBlock);
-
-    if (isAssignedToNight) {
-      if (currentBlockStr !== blockDateStr) {
-        updates.push({ employeeId: employee.employeeId, nightShiftBlockedUntil: blockDate });
-      }
-    } else {
-      if (currentBlockStr === blockDateStr) {
-        updates.push({ employeeId: employee.employeeId, nightShiftBlockedUntil: null });
-      }
-    }
-  });
-
-  if (updates.length === 0) return;
-
+export const syncEmployeeNightBlocks = async (simulatedEmployees, useDatabase) => {
   if (!useDatabase) {
-    updates.forEach(({ employeeId, nightShiftBlockedUntil }) => {
-      const employee = employeeSeed.find((emp) => emp.employeeId === employeeId);
+    simulatedEmployees.forEach((simulatedEmployee) => {
+      const employee = employeeSeed.find((emp) => emp.employeeId === simulatedEmployee.employeeId);
       if (employee) {
-        employee.nightShiftBlockedUntil = nightShiftBlockedUntil;
+        employee.nightShiftBlockedUntil = simulatedEmployee.nightShiftBlockedUntil;
       }
     });
+
+    const savedBlocks = {};
+    employeeSeed.forEach((emp) => {
+      savedBlocks[emp.employeeId] = emp.nightShiftBlockedUntil;
+    });
+    const filePath = path.join(process.cwd(), "blocks.json");
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(savedBlocks, null, 2), "utf8");
+    } catch (e) {
+      console.error("Failed to write blocks.json", e);
+    }
     return;
   }
 
-  for (const { employeeId, nightShiftBlockedUntil } of updates) {
+  for (const simulatedEmployee of simulatedEmployees) {
+    const nightShiftBlockedUntil = simulatedEmployee.nightShiftBlockedUntil
+      ? new Date(formatDateString(simulatedEmployee.nightShiftBlockedUntil))
+      : null;
+
     await Employee.findOneAndUpdate(
-      { employeeId },
+      { employeeId: simulatedEmployee.employeeId },
       { nightShiftBlockedUntil }
     );
   }

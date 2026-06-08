@@ -1,7 +1,7 @@
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
-import { connectDatabase, getEmployees, getLeaves, saveEmployeeLeave, seedEmployees, updateEmployeeNightBlocks } from "./services/store.js";
+import { connectDatabase, getEmployees, getLeaves, saveEmployeeLeave, seedEmployees, syncEmployeeNightBlocks } from "./services/store.js";
 import { generateSchedule } from "./utils/scheduler.js";
 
 const app = express();
@@ -36,12 +36,10 @@ app.get("/api/schedule", async (req, res) => {
     const employees = await getEmployees(useDatabase);
     const leaves = await getLeaves(useDatabase);
     const schedule = generateSchedule({ employees, month, leaves });
+    await syncEmployeeNightBlocks(schedule.simulatedEmployees, useDatabase);
 
-    const nightTeamIds = schedule.teams.night;
-    const monthStart = `${month}-01`;
-    await updateEmployeeNightBlocks(employees, nightTeamIds, monthStart, useDatabase);
-
-    return res.json(schedule);
+    const { simulatedEmployees, ...publicSchedule } = schedule;
+    return res.json(publicSchedule);
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
@@ -58,12 +56,10 @@ app.post("/api/leaves", async (req, res) => {
     const employees = await getEmployees(useDatabase);
     const leaves = await getLeaves(useDatabase);
     const schedule = generateSchedule({ employees, month, leaves });
+    await syncEmployeeNightBlocks(schedule.simulatedEmployees, useDatabase);
 
-    const nightTeamIds = schedule.teams.night;
-    const monthStart = `${month}-01`;
-    await updateEmployeeNightBlocks(employees, nightTeamIds, monthStart, useDatabase);
-
-    return res.json(schedule);
+    const { simulatedEmployees, ...publicSchedule } = schedule;
+    return res.json(publicSchedule);
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
